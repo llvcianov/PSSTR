@@ -85,7 +85,8 @@ void main_blinky(void)
     * Verificare che il Mutex sia stato creato correttamente
     */
     if ((xSemaphore = xSemaphoreCreateMutex()) == NULL) {
-        perror("Errore creazione mutex\n");
+        printf("Errore creazione mutex\n");
+        return;
     }
 
     // To do...
@@ -95,7 +96,9 @@ void main_blinky(void)
     * Avviare lo scheduler
     */
     for (int i = 0; i < TASK_NUM; i++) {
-        xTaskCreate(countTask, "contatore" + i, configMINIMAL_STACK_SIZE, (void*)i, (FIRST_COUNTER_TASK_PRIORITY) - i, NULL);
+        char taskName[12];
+        snprintf(taskName, sizeof(taskName), "contatore%d", i);
+        xTaskCreate(countTask, taskName, configMINIMAL_STACK_SIZE, (void*)i, (FIRST_COUNTER_TASK_PRIORITY) - i, NULL);
     }
     printf("Task count creati\n");
     
