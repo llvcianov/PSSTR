@@ -1,20 +1,20 @@
-# Riconoscitore di sequenza — versione C/POSIX
+# Sequence Recognizer — C/POSIX version
 
-Tre task "generatori" (thread periodici indipendenti, periodi 10/20/40 ms) producono ciascuno un bit in una struttura condivisa. Un task "riconoscitore" legge i tre bit a ogni ciclo, li combina in un valore decimale e verifica se le ultime 4 letture formano la sequenza target `0 3 6 5`. Un task "buddy" stampa periodicamente lo stato corrente.
+Three "generator" tasks (independent periodic threads, periods of 10/20/40 ms) each produce a bit in a shared structure. A "recognizer" task reads the three bits on every cycle, combines them into a decimal value, and checks whether the last 4 readings form the target sequence `0 3 6 5`. A "buddy" task periodically prints the current state.
 
-Sincronizzazione tramite mutex POSIX (con `PTHREAD_PRIO_INHERIT`), scheduling `SCHED_FIFO`.
+Synchronization via POSIX mutexes (with `PTHREAD_PRIO_INHERIT`), `SCHED_FIFO` scheduling.
 
-Questa è la versione preparatoria su Linux/pthread dello stesso problema poi risolto su FreeRTOS per la consegna d'esame (vedi [`../FreeRTOS/`](../FreeRTOS/)).
+This is the preparatory Linux/pthread version of the same problem later solved on FreeRTOS for the exam submission (see [`../FreeRTOS/`](../FreeRTOS/)).
 
-## Come eseguirlo (Docker)
+## How to run it (Docker)
 
 ```bash
 docker build -t riconoscitore .
 docker run -it --rm --cap-add=sys_nice riconoscitore
 ```
 
-Il programma stampa a schermo i bit generati e lo stato del riconoscimento ad ogni ciclo. Premi `q` e poi invio per terminare.
+The program prints the generated bits and the recognition state on screen every cycle. Press `q` and then enter to quit.
 
-## Nota
+## Note
 
-Con i periodi/fasi di default dei 3 generatori (deterministici, non casuali), la sequenza target potrebbe non presentarsi per diversi secondi — è un comportamento del programma originale, non un problema di esecuzione.
+With the 3 generators' default periods/phases (deterministic, not random), the target sequence might not show up for several seconds — this is a behavior of the original program, not an execution issue.

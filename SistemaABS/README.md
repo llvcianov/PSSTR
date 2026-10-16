@@ -1,47 +1,47 @@
-# Sistema ABS
+# ABS System
 
-Simulazione di un sistema ABS (Anti-lock Braking System) su due ruote indipendenti, sviluppata per il corso di Progetto e Sviluppo di Sistemi in Tempo Reale (PSSTR).
+Simulation of an ABS (Anti-lock Braking System) across two independent wheels, developed for the Real-Time Systems Design and Development course (PSSTR).
 
-## Architettura
+## Architecture
 
-Per ciascuna delle due ruote gira un processo `plant` (simula sensore e attuatore della ruota) e un processo `controller` (acquisisce il dato dal sensore, decide l'azione di frenata/decelerazione, comunica con l'altra ruota per coordinare l'intervento ABS). I due controller si scambiano informazioni tramite code di messaggi POSIX per evitare che entrambe le ruote frenino bruscamente insieme. Un processo `reference` imposta il valore di riferimento (velocità/posizione target) per entrambe le ruote, e un processo `DIAG` interroga entrambi i controller per ottenere statistiche di diagnostica (tempi di esecuzione dei thread, stato dei buffer).
+For each of the two wheels there is a `plant` process (simulates the wheel's sensor and actuator) and a `controller` process (reads the sensor data, decides the braking/deceleration action, and communicates with the other wheel to coordinate the ABS intervention). The two controllers exchange information via POSIX message queues to prevent both wheels from braking hard at the same time. A `reference` process sets the target value (target speed/position) for both wheels, and a `DIAG` process queries both controllers for diagnostic statistics (thread execution times, buffer state).
 
-Tutta la comunicazione avviene tramite code di messaggi POSIX con nome, scheduling `SCHED_FIFO` real-time.
+All communication happens via named POSIX message queues, with `SCHED_FIFO` real-time scheduling.
 
-## Come eseguirlo (Docker)
+## How to run it (Docker)
 
 ```bash
 docker build -t sistema-abs .
 docker run -d --name abs --cap-add=sys_nice sistema-abs
 ```
 
-Questo compila il progetto e avvia in background i 4 processi principali (`plant`, `plant_2`, `controller`, `controller_2`) dentro al container. `--cap-add=sys_nice` è necessario per permettere lo scheduling real-time (`SCHED_FIFO`).
+This builds the project and starts the 4 main processes (`plant`, `plant_2`, `controller`, `controller_2`) in the background inside the container. `--cap-add=sys_nice` is required to allow real-time scheduling (`SCHED_FIFO`).
 
-A questo punto puoi interagire con la simulazione:
-
-```bash
-docker exec abs ./reference 50     # imposta il riferimento per entrambe le ruote
-docker exec abs ./DIAG             # richiede una diagnostica a entrambe le ruote
-docker exec -it abs bash           # entra nel container per esplorare liberamente
-```
-
-### Come osservare l'intervento dell'ABS
-
-Il controller calcola `errore = reference - valore_sensore` e decide l'azione di conseguenza (accelera/decelera leggermente, o nessuna azione). **Solo `reference = 0` esatto** attiva lo scenario di frenata di emergenza:
+At this point you can interact with the simulation:
 
 ```bash
-docker exec abs ./reference 100   # valore vicino al sensore iniziale: nessuna azione, "crociera"
-docker exec abs ./reference 0     # frenata di emergenza
-docker exec abs ./DIAG            # ripeti ogni tanto per osservare l'evoluzione
+docker exec abs ./reference 50     # set the target reference for both wheels
+docker exec abs ./DIAG             # request diagnostics from both wheels
+docker exec -it abs bash           # enter the container to explore freely
 ```
 
-Con `reference = 0` il controller comanda una frenata forte e continua. Una frenata prolungata (oltre ~10 cicli) ha una probabilità di far slittare la ruota (si blocca, il sensore smette di aggiornarsi — il bloccaggio che l'ABS deve evitare nella realtà). Quando il controller rileva lo slittamento, interviene l'ABS vero e proprio: riduce la frenata da forte a leggera e avvisa anche il controller dell'altra ruota tramite la coda di coordinamento, così anche lui allenta la frenata. Nell'output di `./DIAG` si osserva il campo "Comando di controllo" passare da `4` (frenata forte) a `2` (frenata leggera, intervento ABS) quando/se lo slittamento viene rilevato — è probabilistico, potrebbe non avvenire subito.
+### How to observe the ABS kicking in
 
-Per fermare tutto:
+The controller computes `error = reference - sensor_value` and decides the action accordingly (slight acceleration/deceleration, or no action). **Only an exact `reference = 0`** triggers the emergency braking scenario:
+
+```bash
+docker exec abs ./reference 100   # value close to the initial sensor reading: no action, "cruising"
+docker exec abs ./reference 0     # emergency braking
+docker exec abs ./DIAG            # repeat this from time to time to observe how it evolves
+```
+
+With `reference = 0` the controller commands strong, continuous braking. Prolonged hard braking (beyond ~10 cycles) has a chance of making the wheel skid (it locks up, the sensor stops updating — the exact lock-up that ABS is meant to prevent in real life). When the controller detects the skid, the actual ABS logic kicks in: it eases the braking from strong to light and also notifies the other wheel's controller via the coordination queue, so it eases off too. In the `./DIAG` output, you'll see the "Comando di controllo" (control command) field switch from `4` (hard braking) to `2` (light braking, ABS intervention) once/if the skid is detected — this is probabilistic and might not happen right away.
+
+To stop everything:
 ```bash
 docker rm -f abs
 ```
 
-## Differenze rispetto alla versione d'esame
+## Differences from the exam version
 
-La versione originale (`run.sh`) apriva 4 finestre di terminale separate (`gnome-terminal`) per i 4 processi — non praticabile in un container headless. Qui i processi vengono avviati in background dentro allo stesso container (necessario perché condividono le code di messaggi POSIX, visibili solo all'interno dello stesso namespace IPC) tramite [`start.sh`](start.sh), che è l'unica aggiunta rispetto al codice originale. Nessuna modifica alla logica applicativa.
+The original version (`run.sh`) opened 4 separate terminal windows (`gnome-terminal`) for the 4 processes — not practical in a headless container. Here the processes are started in the background inside the same container (necessary because they communicate via named POSIX message queues, which are only visible within the same IPC namespace) via [`start.sh`](start.sh), which is the only addition compared to the original code. No changes were made to the application logic.
