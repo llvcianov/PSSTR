@@ -1,0 +1,14 @@
+Per eseguire l'esempio compilare i tre file:
+gcc -o monitor monitor.c -lrt
+gcc -o rt_ps rt_ps.c -lpthread -lrt
+gcc -o rt_async rt_async.c -lrt
+
+(in alternativa dare il comando "make" che sfrutta il Makefile)
+
+Eseguire in ordine prima monitor, poi rt_ps e infine rt_async su terminali differenti: 
+sudo ./monitor
+sudo taskset --cpu-list 1 ./rt_ps
+sudo ./rt_async
+
+Verificare che ogni messaggio inviato tramite rt_async sarà servito dal polling server e sarà stampato dal monitor. 
+Per concludere l'esecuzione e pulire correttamente le code premere "q" e <ENTER> nel terminale che sta eseguendo rt_ps.

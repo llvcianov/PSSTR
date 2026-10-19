@@ -1,0 +1,21 @@
+L'esercizio presenta un file client ed un file server.
+Il server quando eseguito apre una coda e si mette in attesa di richieste da parte dei client. 
+I client (uno o più) una volta eseguiti aspetteranno un input da tastiera. 
+Quando uno dei client riceverà un input da tastiera, esso utilizzerà una coda 
+creata dal server per inviare un messaggio contenente il nome della propria coda (coda del client i_esimo).
+Il server riceverà il messaggio e risponderà al client inviando un token incrementale sulla coda del client i_esimo.
+
+Per eeguire l'esempio compilare i due file in questo modo:
+gcc -o client client.c -lrt
+gcc -o server server.c -lrt
+
+(in alternativa dare il comando "make" che sfrutta il Makefile)
+
+Eseguiamo come amministratori prima il server e poi uno o più client su terminali differenti:
+sudo ./server
+sudo ./client
+sudo ./client
+sudo ./client
+
+Per ogni richiesta proveniente dai client, il server incrementerà ed invierà il token indietro al richiedente.  
+Per concludere l'esecuzione e pulire correttamente le code premere "q" e <ENTER> nel terminale dei Client.
